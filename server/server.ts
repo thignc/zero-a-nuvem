@@ -1,10 +1,22 @@
 import * as restify from 'restify'
+import * as mongoose from 'mongoose'
 import { enviroment } from '../common/enviroment'
 import { Router } from '../common/router'
+import { mergePatchBodyParser } from './merge-patch.parser'
+import { handleError } from './error.handler'
 
 export class Server {
 
   application: restify.Server
+
+  initializedDb(): mongoose.MongooseThenable {
+    (<any>mongoose).Promise = global.Promise
+    return mongoose.connect(enviroment.db.url, {
+      // useMongoClient: true,
+      // useNewUrlParser: true,
+      // useUnifiedTopology: true
+    })
+  }
 
   initRoutes(routers: Router[]): Promise<any> {
     return new Promise((resolve, reject) => {
@@ -16,6 +28,8 @@ export class Server {
         })
 
         this.application.use(restify.plugins.queryParser())
+        this.application.use(restify.plugins.bodyParser())
+        this.application.use(mergePatchBodyParser)
 
         // routes
         for (let router of routers) {
@@ -26,6 +40,8 @@ export class Server {
           resolve(this.application)
         })
         
+        this.application.on('restifyError', handleError)
+
       } catch (error) {
         reject(error)
       }
@@ -33,6 +49,7 @@ export class Server {
   }
 
   bootstrap(routers: Router[] = []): Promise<Server> {
-    return this.initRoutes(routers).then(() => this )
+    return this.initializedDb()
+      .then(() => this.initRoutes(routers).then(() => this ))
   }
 }
