@@ -37,17 +37,31 @@ const userSchema = new mongoose.Schema({
         enum: ['masculino', 'feminino'],
     }
 });
-userSchema.pre('save', function (next) {
+const hashPassword = (object, next) => {
+    bcrypt.hash(object.password, enviroment_1.enviroment.security.saltRounds)
+        .then(hash => {
+        object.password = hash;
+        next();
+    }).catch(next);
+};
+const saveMiddleware = function (next) {
     const user = this;
     if (!user.isModified('password')) {
         next();
     }
     else {
-        bcrypt.hash(user.password, enviroment_1.enviroment.security.saltRounds)
-            .then(hash => {
-            user.password = hash;
-            next();
-        }).catch(next);
+        hashPassword(user, next);
     }
-});
+};
+const updateMiddlaware = function (next) {
+    if (!this.getUpdate().password) {
+        next();
+    }
+    else {
+        hashPassword(this.getUpdate(), next);
+    }
+};
+userSchema.pre('save', saveMiddleware);
+userSchema.pre('findOneAndUpdate', updateMiddlaware);
+userSchema.pre('update', updateMiddlaware);
 exports.User = mongoose.model('User', userSchema);
