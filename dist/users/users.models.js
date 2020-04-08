@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const mongoose = require("mongoose");
-const cpf_1 = require("../common/validators/cpf");
 const bcrypt = require("bcrypt");
+const mongoose = require("mongoose");
 const enviroment_1 = require("../common/enviroment");
+const cpf_1 = require("../common/validators/cpf");
 const userSchema = new mongoose.Schema({
     cpf: {
         type: String,
@@ -37,6 +37,9 @@ const userSchema = new mongoose.Schema({
         enum: ['masculino', 'feminino'],
     }
 });
+userSchema.statics.findByEmail = function (email) {
+    return this.findOne({ email }); // {email: email}
+};
 const hashPassword = (object, next) => {
     bcrypt.hash(object.password, enviroment_1.enviroment.security.saltRounds)
         .then(hash => {

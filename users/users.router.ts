@@ -1,71 +1,55 @@
-import { Router } from '../common/router'
+// import { Router } from '../common/router' 
+import { ModelRouter } from '../common/model-router'
 import * as restify from 'restify'
 import { User } from './users.models'
-import { NotFoundError } from 'restify-errors'
 
-class UsersRouter extends Router {
+class UsersRouter extends ModelRouter<User> {
 
   constructor() {
-    super()
+    super(User)
     this.on('beforeRender', document => {
       document.password = undefined
     })
   }
+
+  findByEmail = (req, res, next) => {
+    if(req.query.mail) {
+      // User.find({email: req.query.email})
+      User.findByEmail(req.query.email)
+      .then(user => {
+        if(user) {
+          return [user]
+        } else {
+          return []
+        }
+      })
+      .then(this.renderAll(res, next))
+      .catch(next)
+    } else {
+      next()
+    }
+  }
+
   applyRoutes(application: restify.Server) {
 
-    application.get('/users', (req, res, next) => {
-      User.find()
-        .then(this.render(res, next))
-        .catch(next)
-    })
+    /*Aqui temos uma implementação antiga onde funcinava, o client recebia o tratamento para a versão mais atual, ou seja, a '2.0.0'
+    
+    application.get({path: '/users', version: '1.0.0'}, this.findAll)
+    application.get({path: '/users', version: '2.0.0'}, [this.findByEmail, this.findAll]) 
+    
+    Porém nas versões mais atual do restify se faz necessário o uso de um plugin para versionar essas APIs.
+    */
 
-    application.get('/users/:id', (req, res, next) => {
-      User.findById(req.params.id)
-        .then(this.render(res, next))
-        .catch(next)
-    })
+    application.get('/users', restify.plugins.conditionalHandler([
+      {version: '1.0.0', handler: [this.findAll]},
+      {version: '2.0.0', handler: [this.findByEmail, this.findAll]}
+    ]))
 
-    application.post('/users', (req, res, next) => {
-      let user = new User(req.body)
-      user.save()
-        .then(this.render(res, next))
-        .catch(next)
-    })
-
-    application.put('/users/:id', (req, res, next) => {
-      const options = { overwrite: true, runValidators: true }
-      User.update({ _id: req.params.id}, req.body, options)
-          .exec().then(result => {
-            if(result.n) {
-              return User.findById(req.params.id).exec()
-            } else {
-              throw new NotFoundError('Documento não encontrado')
-            }
-          })
-            .then(this.render(res, next))
-            .catch(next)
-    })
-
-    application.patch('/users/:id', (req, res, next) => {
-      const options = { new: true, runValidators: true }
-      User.findByIdAndUpdate(req.params.id, req.body, options)
-        .then(this.render(res, next))
-        .catch(next)
-    })
-
-    application.del('/users/:id', (req, res, next) => {
-        User.remove({_id: req.params.id} )
-        .exec()
-        .then((commandResult: any) => {
-          if (commandResult.result.n) {
-            res.send(204)
-          } else {
-            throw new NotFoundError('Documento não encontrado')
-          }        
-          return next()
-        })
-      }
-    )
+    application.get('/users/:id', [this.validateID, this.findById])
+    application.post('/users', this.save)
+    application.put('/users/:id', [this.validateID, this.replace])
+    application.patch('/users/:id', [this.validateID, this.update])
+    application.del('/users/:id', [this.validateID, this.delete])
   }  
 }
 

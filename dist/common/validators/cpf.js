@@ -6,7 +6,7 @@ exports.validateCPF = (cpf) => {
     if (cpf == undefined || cpf.trim().length === 0 || cpf === '00000000000') {
         return false;
     }
-    cpf = cpf.replace('.', '').replace('.', '').replace(',', '').replace(',', '').replace('-', '');
+    cpf = cpf.replace('.', '').replace('.', '').replace('-', '');
     for (let i = 1; i <= 9; i++) {
         sum += parseInt(cpf.substring(i - 1, i)) * (11 - i);
     }

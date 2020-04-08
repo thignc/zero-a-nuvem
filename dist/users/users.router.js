@@ -1,65 +1,52 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const router_1 = require("../common/router");
+// import { Router } from '../common/router' 
+const model_router_1 = require("../common/model-router");
+const restify = require("restify");
 const users_models_1 = require("./users.models");
-const restify_errors_1 = require("restify-errors");
-class UsersRouter extends router_1.Router {
+class UsersRouter extends model_router_1.ModelRouter {
     constructor() {
-        super();
+        super(users_models_1.User);
+        this.findByEmail = (req, res, next) => {
+            if (req.query.mail) {
+                // User.find({email: req.query.email})
+                users_models_1.User.findByEmail(req.query.email)
+                    .then(user => {
+                    if (user) {
+                        return [user];
+                    }
+                    else {
+                        return [];
+                    }
+                })
+                    .then(this.renderAll(res, next))
+                    .catch(next);
+            }
+            else {
+                next();
+            }
+        };
         this.on('beforeRender', document => {
             document.password = undefined;
         });
     }
     applyRoutes(application) {
-        application.get('/users', (req, res, next) => {
-            users_models_1.User.find()
-                .then(this.render(res, next))
-                .catch(next);
-        });
-        application.get('/users/:id', (req, res, next) => {
-            users_models_1.User.findById(req.params.id)
-                .then(this.render(res, next))
-                .catch(next);
-        });
-        application.post('/users', (req, res, next) => {
-            let user = new users_models_1.User(req.body);
-            user.save()
-                .then(this.render(res, next))
-                .catch(next);
-        });
-        application.put('/users/:id', (req, res, next) => {
-            const options = { overwrite: true, runValidators: true };
-            users_models_1.User.update({ _id: req.params.id }, req.body, options)
-                .exec().then(result => {
-                if (result.n) {
-                    return users_models_1.User.findById(req.params.id).exec();
-                }
-                else {
-                    throw new restify_errors_1.NotFoundError('Documento não encontrado');
-                }
-            })
-                .then(this.render(res, next))
-                .catch(next);
-        });
-        application.patch('/users/:id', (req, res, next) => {
-            const options = { new: true, runValidators: true };
-            users_models_1.User.findByIdAndUpdate(req.params.id, req.body, options)
-                .then(this.render(res, next))
-                .catch(next);
-        });
-        application.del('/users/:id', (req, res, next) => {
-            users_models_1.User.remove({ _id: req.params.id })
-                .exec()
-                .then((commandResult) => {
-                if (commandResult.result.n) {
-                    res.send(204);
-                }
-                else {
-                    throw new restify_errors_1.NotFoundError('Documento não encontrado');
-                }
-                return next();
-            });
-        });
+        /*Aqui temos uma implementação antiga onde funcinava, o client recebia o tratamento para a versão mais atual, ou seja, a '2.0.0'
+        
+        application.get({path: '/users', version: '1.0.0'}, this.findAll)
+        application.get({path: '/users', version: '2.0.0'}, [this.findByEmail, this.findAll])
+        
+        Porém nas versões mais atual do restify se faz necessário o uso de um plugin para versionar essas APIs.
+        */
+        application.get('/users', restify.plugins.conditionalHandler([
+            { version: '1.0.0', handler: [this.findAll] },
+            { version: '2.0.0', handler: [this.findByEmail, this.findAll] }
+        ]));
+        application.get('/users/:id', [this.validateID, this.findById]);
+        application.post('/users', this.save);
+        application.put('/users/:id', [this.validateID, this.replace]);
+        application.patch('/users/:id', [this.validateID, this.update]);
+        application.del('/users/:id', [this.validateID, this.delete]);
     }
 }
 exports.usersRouter = new UsersRouter();
