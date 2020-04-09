@@ -3,14 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // import { Router } from '../common/router' 
 const model_router_1 = require("../common/model-router");
 const restify = require("restify");
-const users_models_1 = require("./users.models");
+const users_model_1 = require("./users.model");
 class UsersRouter extends model_router_1.ModelRouter {
     constructor() {
-        super(users_models_1.User);
+        super(users_model_1.User);
         this.findByEmail = (req, res, next) => {
             if (req.query.mail) {
                 // User.find({email: req.query.email})
-                users_models_1.User.findByEmail(req.query.email)
+                users_model_1.User.findByEmail(req.query.email)
                     .then(user => {
                     if (user) {
                         return [user];

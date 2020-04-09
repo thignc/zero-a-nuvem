@@ -1,6 +1,6 @@
 import * as mongoose from 'mongoose'
 import { Restaurant } from '../restaurants/restaurants.model'
-import { User } from '../users/users.models'
+import { User } from '../users/users.model'
 
 export interface Review extends mongoose.Document {
   date: Date,
