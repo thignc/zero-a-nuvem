@@ -2,14 +2,16 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const model_router_1 = require("../common/model-router");
 const review_model_1 = require("./review.model");
+const users_model_1 = require("../users/users.model");
+const restaurants_model_1 = require("../restaurants/restaurants.model");
 class ReviewsRouter extends model_router_1.ModelRouter {
     constructor() {
         super(review_model_1.Review);
     }
     prepareOne(query) {
         return query
-            .populate('user', 'name')
-            .populate('restaurant', 'name');
+            .populate('user', [], users_model_1.User)
+            .populate('restaurant', [], restaurants_model_1.Restaurant);
     }
     // findById = (req, res, next) => {
     //   this.model.findById(req.params.id)

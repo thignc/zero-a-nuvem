@@ -3,6 +3,8 @@ import * as mongoose from 'mongoose'
 import { ModelRouter } from '../common/model-router'
 import { Review } from './review.model'
 import { Router } from '../common/router'
+import { User } from '../users/users.model'
+import { Restaurant } from '../restaurants/restaurants.model'
 
 class ReviewsRouter extends ModelRouter<Review> {
   constructor() {
@@ -11,8 +13,8 @@ class ReviewsRouter extends ModelRouter<Review> {
 
   protected prepareOne(query: mongoose.DocumentQuery<Review, Review>): mongoose.DocumentQuery<Review, Review> {
     return query
-            .populate('user', 'name')
-            .populate('restaurant', 'name')
+            .populate('user', [], User)
+            .populate('restaurant', [], Restaurant)
   }
 
   // findById = (req, res, next) => {

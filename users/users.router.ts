@@ -13,7 +13,7 @@ class UsersRouter extends ModelRouter<User> {
   }
 
   findByEmail = (req, res, next) => {
-    if(req.query.mail) {
+    if(req.query.email) {
       // User.find({email: req.query.email})
       User.findByEmail(req.query.email)
       .then(user => {
@@ -41,8 +41,8 @@ class UsersRouter extends ModelRouter<User> {
     */
 
     application.get('/users', restify.plugins.conditionalHandler([
-      {version: '1.0.0', handler: [this.findAll]},
-      {version: '2.0.0', handler: [this.findByEmail, this.findAll]}
+      { version: '1.0.0', handler: [this.findAll] },
+      { version: '2.0.0', handler: [this.findByEmail, this.findAll] }
     ]))
 
     application.get('/users/:id', [this.validateID, this.findById])
