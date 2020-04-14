@@ -16,14 +16,17 @@ export const handleError = (req: restify.Request, res: restify.Response, error, 
     case 'ValidationError':
       error.statusCode = 400
       
-      // corpo do código para versões anteriores que não tinha tratamento de erro a erro, aparecia sempre o primeiro erro
-      /* const messages: any[] = []
+      /* corpo do código para versões anteriores que não tinha tratamento de erro a erro, aparecia sempre o primeiro erro
+      
+      const messages: any[] = []
       for (let e in error.errors) {
         messages.push({ message: error.errors[e].message })
       }
       error.toJSON = () => {
         errors: messages
-      } */
+      } 
+      
+      */
       break
   }
   done()

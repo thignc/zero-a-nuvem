@@ -8,9 +8,17 @@ class ReviewsRouter extends model_router_1.ModelRouter {
     constructor() {
         super(review_model_1.Review);
     }
+    envelop(document) {
+        let resource = super.envelop(document);
+        const restaurantId = document.restaurant._id
+            ? document.restaurant._id
+            : document.restaurant;
+        resource._links.restaurant = `/restaurants/${restaurantId}`;
+        return resource;
+    }
     prepareOne(query) {
         return query
-            .populate('user', [], users_model_1.User)
+            .populate('user', ['name', 'email'], users_model_1.User)
             .populate('restaurant', [], restaurants_model_1.Restaurant);
     }
     // findById = (req, res, next) => {
@@ -21,10 +29,10 @@ class ReviewsRouter extends model_router_1.ModelRouter {
     //     .catch(next)
     // }
     applyRoutes(application) {
-        application.get('/reviews', this.findAll);
-        application.get('/reviews/:id', [this.validateID, this.findById]);
-        application.post('/reviews', this.save);
-        application.del('/reviews/:id', [this.validateID, this.delete]);
+        application.get(`${this.basePath}`, this.findAll);
+        application.get(`${this.basePath}/:id`, [this.validateID, this.findById]);
+        application.post(`${this.basePath}`, this.save);
+        application.del(`${this.basePath}/:id`, [this.validateID, this.delete]);
     }
 }
 exports.reviewsRouter = new ReviewsRouter();
