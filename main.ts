@@ -1,4 +1,5 @@
 import { Server } from './server/server'
+import { mainRouter } from './mainRouter'
 import { restaurantsRouter } from './restaurants/restaurants.routers'
 import { reviewsRouter } from './reviews/reviews.router'
 import { usersRouter } from './users/users.router'
@@ -6,6 +7,7 @@ import { usersRouter } from './users/users.router'
 
 const server = new Server()
 server.bootstrap([
+  mainRouter,
   restaurantsRouter,
   reviewsRouter,
   usersRouter,
