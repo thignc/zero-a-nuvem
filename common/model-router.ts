@@ -24,6 +24,30 @@ export abstract class  ModelRouter<D extends mongoose.Document> extends Router {
     return resource
   }
 
+  envelopAll(documents: any, options: any = {}): any {
+    const resource: any = {
+      _links: {
+        self: `${options.requestUrl}`,
+      },
+      itens: documents,
+    }
+    if(options.page) {
+      const needAnotherPage = (options.count % options.pageSize) > 0
+        ? 1
+        : 0
+      const lastPage = Math.floor(options.count / options.pageSize) + needAnotherPage
+      if(options.page > 1) {
+        resource._links.previous = `${this.basePath}?_page=${options.page - 1}`
+      }
+      const next = Number(`${this.basePath}?_page=${options.page + 1}`) > lastPage
+        ? lastPage
+        : Number(`${this.basePath}?_page=${options.page + 1}`)
+      resource._links.next = next
+
+    }
+    return resource
+  }
+
   validateID = (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       next(new NotFoundError('Document not found.'))
@@ -39,10 +63,19 @@ export abstract class  ModelRouter<D extends mongoose.Document> extends Router {
       : 0
 
     const totalRecordsToSkip = (page - 1) * this.pageSize
-    this.model.find()
-      .skip(totalRecordsToSkip)
-      .limit(this.pageSize)
-      .then(this.renderAll(res, next))
+
+    this.model
+    .count({}).exec()
+    .then(count => this.model.find()
+        .skip(totalRecordsToSkip)
+        .limit(this.pageSize)
+        .then(this.renderAll(res, next, { 
+          page,
+          count,
+          pageSize: this.pageSize,
+          requestUrl: req.url,
+        })))
+    
       .catch(next)
   }
 

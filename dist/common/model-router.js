@@ -22,10 +22,17 @@ class ModelRouter extends router_1.Router {
                 ? page
                 : 0;
             const totalRecordsToSkip = (page - 1) * this.pageSize;
-            this.model.find()
+            this.model
+                .count({}).exec()
+                .then(count => this.model.find()
                 .skip(totalRecordsToSkip)
                 .limit(this.pageSize)
-                .then(this.renderAll(res, next))
+                .then(this.renderAll(res, next, {
+                page,
+                count,
+                pageSize: this.pageSize,
+                requestUrl: req.url,
+            })))
                 .catch(next);
         };
         this.findById = (req, res, next) => {
@@ -82,6 +89,28 @@ class ModelRouter extends router_1.Router {
             _links: {}
         }, document.toJSON());
         resource._links.self = `${this.basePath}/${resource._id}`;
+        return resource;
+    }
+    envelopAll(documents, options = {}) {
+        const resource = {
+            _links: {
+                self: `${options.requestUrl}`,
+            },
+            itens: documents,
+        };
+        if (options.page) {
+            const needAnotherPage = (options.count % options.pageSize) > 0
+                ? 1
+                : 0;
+            const lastPage = Math.floor(options.count / options.pageSize) + needAnotherPage;
+            if (options.page > 1) {
+                resource._links.previous = `${this.basePath}?_page=${options.page - 1}`;
+            }
+            const next = Number(`${this.basePath}?_page=${options.page + 1}`) > lastPage
+                ? lastPage
+                : Number(`${this.basePath}?_page=${options.page + 1}`);
+            resource._links.next = next;
+        }
         return resource;
     }
 }
