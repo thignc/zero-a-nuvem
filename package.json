@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/thignc/zero-a-nuvem#readme",
   "dependencies": {
-    "bcrypt": "4.0.1",
+    "bcrypt": "5.0.0",
     "mongoose": "^5.9.7",
     "restify": "^8.5.1",
     "restify-errors": "5.0.0"
